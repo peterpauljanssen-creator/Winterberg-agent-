@@ -8,7 +8,7 @@ TELEGRAM_TOKEN = "7816214855:AAFAr7TuoLZe2FRoqeDD_rAGovVvr_lKVmY"
 TELEGRAM_CHAT_ID = "8546730577"
 
 # --- INSTELLINGEN ---
-DOEL_DATUM = "2025-12-15" # Let op: Jaartal klopt nu
+DOEL_DATUM = "2025-12-07" # Let op: Jaartal klopt nu
 LOCATIE = {"lat": 51.19, "lon": 8.53} # Winterberg
 OPSLAG_BESTAND = "history.json"
 
