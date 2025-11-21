@@ -9,7 +9,7 @@ TELEGRAM_CHAT_ID = "8546730577"
 
 # --- INSTELLINGEN ---
 # LET OP: Pas het jaartal aan als je dit jaar (2024) bedoelt!
-DOEL_DATUM = "2025-12-15" 
+DOEL_DATUM = "2025-11-22" 
 
 LOCATIE = {"lat": 51.19, "lon": 8.53} # Winterberg
 OPSLAG_BESTAND = "history.json"
