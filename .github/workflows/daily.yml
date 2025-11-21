@@ -1,0 +1,35 @@
+name: Dagelijkse Winterberg Check
+
+on:
+  schedule:
+    - cron: '0 7 * * *'  # 07:00 UTC = 08:00 Nederlandse tijd
+  workflow_dispatch:      # Hiermee kun je ook handmatig testen
+
+permissions:
+  contents: write
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code ophalen
+        uses: actions/checkout@v3
+
+      - name: Python installeren
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Installeer bibliotheken
+        run: pip install requests
+
+      - name: Run Agent
+        run: python main.py
+
+      - name: Historie opslaan
+        run: |
+          git config --global user.name 'WinterbergBot'
+          git config --global user.email 'bot@noreply.github.com'
+          git add history.json
+          git commit -m "Update weer historie" || echo "Geen wijzigingen"
+          git push
