@@ -16,8 +16,8 @@ def send_telegram(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"})
 
-def get_weather():
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={LOCATIE['lat']}&longitude={LOCATIE['lon']}&daily=temperature_2m_max,temperature_2m_min,snowfall_sum,precipitation_probability_max&timezone=Europe%2FBerlin"
+def get_weather():url = f"https://api.open-meteo.com/v1/forecast?latitude={LOCATIE['lat']}&longitude={LOCATIE['lon']}&daily=temperature_2m_max,temperature_2m_min,snowfall_sum,precipitation_probability_max&timezone=Europe%2FBerlin&forecast_days=16"
+    url = f"https://api.open-meteo.com/v1/"
     return requests.get(url).json()
 
 def main():
