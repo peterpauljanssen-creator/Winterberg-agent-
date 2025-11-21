@@ -3,16 +3,20 @@ import json
 import datetime
 import os
 
-# --- JOUW GEGEVENS (Al ingevuld) ---
+# --- JOUW GEGEVENS ---
 TELEGRAM_TOKEN = "7816214855:AAFAr7TuoLZe2FRoqeDD_rAGovVvr_lKVmY"
 TELEGRAM_CHAT_ID = "8546730577"
 
 # --- INSTELLINGEN ---
-# LET OP: Pas het jaartal aan als je dit jaar (2024) bedoelt!
-DOEL_DATUM = "2025-11-22" 
-
 LOCATIE = {"lat": 51.19, "lon": 8.53} # Winterberg
 OPSLAG_BESTAND = "history.json"
+EINDE_SEIZOEN = datetime.date(2026, 3, 31)
+
+def get_next_saturday():
+    """Berekent de datum van de eerstvolgende zaterdag (of vandaag als het zaterdag is)"""
+    vandaag = datetime.date.today()
+    dagen_tot_zaterdag = (5 - vandaag.weekday()) % 7
+    return vandaag + datetime.timedelta(days=dagen_tot_zaterdag)
 
 def send_telegram(message):
     try:
@@ -23,79 +27,92 @@ def send_telegram(message):
         print(f"Fout bij sturen naar Telegram: {e}")
 
 def get_weather():
-    # Haalt weer op, met een blik van 16 dagen vooruit
+    # We kijken 16 dagen vooruit om zeker te zijn dat het weekend erin valt
     url = f"https://api.open-meteo.com/v1/forecast?latitude={LOCATIE['lat']}&longitude={LOCATIE['lon']}&daily=temperature_2m_max,temperature_2m_min,snowfall_sum,precipitation_probability_max&timezone=Europe%2FBerlin&forecast_days=16"
     return requests.get(url).json()
 
 def main():
-    print("Agent gestart...")
+    print("Seizoens-Agent gestart...")
+    vandaag = datetime.date.today()
 
-    # 1. Historie laden
+    # 1. Check of het seizoen voorbij is
+    if vandaag > EINDE_SEIZOEN:
+        print("Seizoen is afgelopen. Ik stop ermee.")
+        return
+
+    # 2. Bepaal doel datum (Aanstaande Zaterdag)
+    target_date_obj = get_next_saturday()
+    target_date_str = str(target_date_obj)
+    
+    # 3. Historie laden
     historie = []
     if os.path.exists(OPSLAG_BESTAND):
         with open(OPSLAG_BESTAND, 'r') as f:
             try: historie = json.load(f)
             except: historie = []
 
-    # 2. Nieuwe data ophalen
+    # 4. Weer ophalen
     data = get_weather()
-    
     if 'daily' not in data:
-        print("Fout: Geen weerdata ontvangen.")
-        send_telegram(f"⚠️ Fout bij ophalen data. API response: {data}")
+        send_telegram("⚠️ Fout bij ophalen weerdata.")
         return
 
     dagen = data['daily']['time']
-    
     try:
-        idx = dagen.index(DOEL_DATUM)
+        idx = dagen.index(target_date_str)
     except ValueError:
-        # Als de datum nog te ver weg is (meer dan 16 dagen)
-        msg = f"⚠️ Datum {DOEL_DATUM} nog niet in voorspelling (ik kijk max 16 dagen vooruit)."
-        print(msg)
-        # Optioneel: haal '#' weg hieronder als je elke dag toch een berichtje wilt ontvangen
-        # send_telegram(msg)
+        print(f"Datum {target_date_str} buiten bereik API.")
         return
 
-    vandaag = {
-        "datum_check": str(datetime.date.today()),
+    # De voorspelling voor dat weekend
+    nieuwe_check = {
+        "datum_check": str(vandaag),
+        "doel_datum": target_date_str,
         "max": data['daily']['temperature_2m_max'][idx],
         "min": data['daily']['temperature_2m_min'][idx],
         "sneeuw": data['daily']['snowfall_sum'][idx],
         "neerslag": data['daily']['precipitation_probability_max'][idx]
     }
 
-    # 3. Vergelijken met historie (Trend analyse)
+    # 5. Trend Analyse (Vergelijk alleen met checks voor DEZELFDE doel datum)
     trend_msg = ""
-    # Sorteer vorige checks op datum (nieuwste eerst) en pak de top 3
-    vorige_checks = sorted(historie, key=lambda x: x['datum_check'], reverse=True)[:3]
-    
-    if vorige_checks:
-        trend_msg = "\n📉 *Trend t.o.v. vorige dagen:*\n"
-        for oud in vorige_checks:
-            diff_temp = vandaag['max'] - oud['max']
-            diff_snow = vandaag['sneeuw'] - oud['sneeuw']
-            
-            pijl_t = "🔺" if diff_temp > 0 else "🔻"
-            pijl_s = "meer ❄️" if diff_snow > 0 else "minder ❄️"
-            if diff_snow == 0: pijl_s = "stabiel"
-            
-            trend_msg += f"- Check {oud['datum_check'][5:]}: {abs(round(diff_temp,1))}°C {pijl_t} & {pijl_s}\n"
+    relevante_historie = [h for h in historie if h.get('doel_datum') == target_date_str]
+    # Sorteer: nieuwste eerst
+    relevante_historie = sorted(relevante_historie, key=lambda x: x['datum_check'], reverse=True)[:2]
 
-    # 4. Bericht samenstellen
-    bericht = (f"🏔️ **Winterberg Update**\n"
-               f"📅 Voor: {DOEL_DATUM}\n\n"
-               f"🌡️ Max: {vandaag['max']}°C (Min: {vandaag['min']}°C)\n"
-               f"❄️ Sneeuw: {vandaag['sneeuw']} cm\n"
-               f"☔ Neerslagkans: {vandaag['neerslag']}%\n"
+    if relevante_historie:
+        trend_msg = "\n📉 *Trend t.o.v. vorige check:*\n"
+        vorige = relevante_historie[0] # De meest recente vorige check
+        
+        diff_temp = nieuwe_check['max'] - vorige['max']
+        diff_snow = nieuwe_check['sneeuw'] - vorige['sneeuw']
+        
+        pijl_t = "🔺" if diff_temp > 0 else "🔻"
+        pijl_s = "meer ❄️" if diff_snow > 0 else "minder ❄️"
+        if diff_snow == 0: pijl_s = "stabiel"
+        
+        trend_msg += f"- Gisteren voorspeld: {vorige['max']}°C & {vorige['sneeuw']}cm\n"
+        trend_msg += f"- Verschil: {abs(round(diff_temp,1))}°C {pijl_t} & {pijl_s}\n"
+
+    # 6. Bericht sturen
+    bericht = (f"🏔️ **Weekend Update**\n"
+               f"📅 Voor zaterdag: {target_date_str}\n\n"
+               f"🌡️ Max: {nieuwe_check['max']}°C (Min: {nieuwe_check['min']}°C)\n"
+               f"❄️ Sneeuw: {nieuwe_check['sneeuw']} cm\n"
+               f"☔ Neerslagkans: {nieuwe_check['neerslag']}%\n"
                f"{trend_msg}\n"
-               f"🔗 [Live Pistes](https://www.skiliftkarussell.de/aktuell/lift-und-pisteninfo/)")
+               f"🔗 [Officiële Status](https://www.skiliftkarussell.de/aktuell/lifte-pisten/)\n"
+               f"🔗 [Bergfex Overzicht](https://www.skiliftkarussell.de/aktuell/lift-und-pisteninfo/)")
     
-    print(bericht) # Voor in de GitHub log
-    send_telegram(bericht) # Naar je telefoon
+    print(bericht)
+    send_telegram(bericht)
 
-    # 5. Opslaan voor morgen
-    historie.append(vandaag)
+    # 7. Opslaan (Voeg toe aan historie)
+    historie.append(nieuwe_check)
+    # Houd het bestand klein: bewaar alleen de laatste 50 checks
+    if len(historie) > 50:
+        historie = historie[-50:]
+        
     with open(OPSLAG_BESTAND, 'w') as f:
         json.dump(historie, f)
 
