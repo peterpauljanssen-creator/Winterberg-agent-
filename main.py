@@ -101,7 +101,7 @@ def main():
                f"❄️ Sneeuw: {nieuwe_check['sneeuw']} cm\n"
                f"☔ Neerslagkans: {nieuwe_check['neerslag']}%\n"
                f"{trend_msg}\n"
-               f"🔗 [Officiële Status](https://www.skiliftkarussell.de/aktuell/lifte-pisten/)\n"
+               f"🔗 [Officiële Status](https://www.skiliftkarussell.de/aktuell/)\n"
                f"🔗 [Bergfex Overzicht](https://www.skiliftkarussell.de/aktuell/lift-und-pisteninfo/)")
     
     print(bericht)
