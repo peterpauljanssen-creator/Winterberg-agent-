@@ -2,8 +2,8 @@ name: Dagelijkse Winterberg Check
 
 on:
   schedule:
-    - cron: '0 7 * * *'  # 07:00 UTC = 08:00 Nederlandse tijd
-  workflow_dispatch:      # Hiermee kun je ook handmatig testen
+    - cron: '0 7 * * *'  # 08:00 NL tijd
+  workflow_dispatch:      # Handmatige test knop
 
 permissions:
   contents: write
@@ -26,10 +26,16 @@ jobs:
       - name: Run Agent
         run: python main.py
 
-      - name: Historie opslaan
+      - name: Historie opslaan (indien aanwezig)
         run: |
           git config --global user.name 'WinterbergBot'
           git config --global user.email 'bot@noreply.github.com'
-          git add history.json
-          git commit -m "Update weer historie" || echo "Geen wijzigingen"
-          git push
+          
+          # We checken eerst of het bestand bestaat (-f)
+          if [ -f history.json ]; then
+            git add history.json
+            git commit -m "Update weer historie"
+            git push
+          else
+            echo "Geen historie bestand gevonden (datum waarschijnlijk nog te ver weg). Ik sla niets op."
+          fi
