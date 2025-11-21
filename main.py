@@ -89,7 +89,7 @@ def main():
                f"❄️ Sneeuw: {vandaag['sneeuw']} cm\n"
                f"☔ Neerslagkans: {vandaag['neerslag']}%\n"
                f"{trend_msg}\n"
-               f"🔗 [Live Pistes](https://www.skiliftkarussell.de/nl/actueel/liften-en-pistes/)")
+               f"🔗 [Live Pistes](https://www.skiliftkarussell.de/aktuell/lift-und-pisteninfo/)")
     
     print(bericht) # Voor in de GitHub log
     send_telegram(bericht) # Naar je telefoon
