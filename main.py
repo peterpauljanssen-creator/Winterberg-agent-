@@ -102,7 +102,7 @@ def main():
                f"☔ Neerslagkans: {nieuwe_check['neerslag']}%\n"
                f"{trend_msg}\n"
                f"🔗 [Officiële Status](https://www.skiliftkarussell.de/aktuell/)\n"
-               f"🔗 [Bergfex Overzicht](https://www.skiliftkarussell.de/aktuell/lift-und-pisteninfo/)")
+               f"🔗 [Wettercams Winterberg](https://www.skiliftkarussell.de/nl/stroom/360-live-mediacam/)")
     
     print(bericht)
     send_telegram(bericht)
