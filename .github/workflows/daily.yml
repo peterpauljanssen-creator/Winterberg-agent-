@@ -20,8 +20,9 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Installeer bibliotheken
-        run: pip install requests
+     - name: Installeer bibliotheken
+        run: pip install requests beautifulsoup4
+
 
       - name: Run Agent
         run: python main.py
