@@ -2,8 +2,8 @@ name: Dagelijkse Winterberg Check
 
 on:
   schedule:
-    - cron: '0 7 * * *'  # 08:00 NL tijd
-  workflow_dispatch:      # Handmatige test knop
+    - cron: '0 7 * * *'  # 07:00 UTC = 08:00 Nederlandse tijd
+  workflow_dispatch:      # Hiermee kun je ook handmatig testen
 
 permissions:
   contents: write
@@ -20,23 +20,18 @@ jobs:
         with:
           python-version: '3.9'
 
-     - name: Installeer bibliotheken
+      - name: Installeer bibliotheken
+        # HIER is de wijziging: beautifulsoup4 toegevoegd voor de scraper
         run: pip install requests beautifulsoup4
-
 
       - name: Run Agent
         run: python main.py
 
-      - name: Historie opslaan (indien aanwezig)
+      - name: Historie opslaan
         run: |
           git config --global user.name 'WinterbergBot'
           git config --global user.email 'bot@noreply.github.com'
           
-          # We checken eerst of het bestand bestaat (-f)
-          if [ -f history.json ]; then
-            git add history.json
-            git commit -m "Update weer historie"
-            git push
-          else
-            echo "Geen historie bestand gevonden (datum waarschijnlijk nog te ver weg). Ik sla niets op."
-          fi
+          # We checken eerst of het bestand bestaat (-f) om errors te voorkomen
+          if [ -f history.json ];
+          
